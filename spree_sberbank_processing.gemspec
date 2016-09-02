@@ -3,12 +3,12 @@ Gem::Specification.new do |s|
   s.platform    = Gem::Platform::RUBY
   s.name        = 'spree_sberbank_processing'
   s.version     = '3.1.0'
-  s.summary     = 'TODO: Add gem summary here'
-  s.description = 'TODO: Add (optional) gem description here'
+  s.summary     = 'Spree Payment Gateway for Sberbank'
+  s.description = 'Payment Method for Sberbank processing center'
   s.required_ruby_version = '>= 2.1.0'
 
-  # s.author    = 'You'
-  # s.email     = 'you@example.com'
+  s.author    = 'Pozhidaev Sergey'
+  s.email     = 'pserg183@gmail.com'
   # s.homepage  = 'http://www.spreecommerce.com'
   s.license = 'BSD-3'
 
