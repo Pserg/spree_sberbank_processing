@@ -1,0 +1,4 @@
+ru:
+  spree:
+    api_username: 'пользователь API '
+    api_password: 'пароль API'

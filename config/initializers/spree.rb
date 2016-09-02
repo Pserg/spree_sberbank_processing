@@ -1,1 +1,1 @@
-Rails.application.config.spree.payment_methods << SpreeSberbankProcessing
+Rails.application.config.spree.payment_methods << Spree::Gateway::SberbankGateway
