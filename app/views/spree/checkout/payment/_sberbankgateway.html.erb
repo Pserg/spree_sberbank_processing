@@ -1,0 +1,12 @@
+<div class="well clearfix">
+  <p><%= image_tag 'credit_cards/credit_card.gif', id: 'credit-card-image', class: 'pull-right', width: '170', height: '28' %></p>
+  <% param_prefix = "payment_source[#{payment_method.id}]" %>
+  <br>
+  <p>В случае если Ваш банк поддерживает технологию безопасного проведения интернет-платежей Verified By Visa или MasterCard Secure Code, для проведения платежа также может потребоваться ввод специального пароля. Способы и возможность получения паролей для совершения интернет-платежей Вы можете уточнить в банке, выпустившем карту.</p>
+  <p>Настоящий сайт поддерживает 256-битное шифрование. Конфиденциальность сообщаемой персональной информации обеспечивается ПАО "Сбербанк России". Введенная информация не будет предоставлена третьим лицам за исключением случаев, предусмотренных законодательством РФ. Проведение платежей по банковским картам осуществляется в строгом соответствии с требованиями платежных систем Visa Int. и MasterCard Europe Sprl.</p>
+  <%= hidden_field_tag "#{param_prefix}[name]", "Name", id: "name_on_card" %>
+  <%= hidden_field_tag "#{param_prefix}[number]", '4111111111111111', id: "card_number" %>
+  <%= hidden_field_tag "#{param_prefix}[expiry]", '2019/11', id: "card_expiry" %>
+  <%= hidden_field_tag "#{param_prefix}[verification_value]", '1111', id: "card_code", class: 'verification_value' %>
+  <%= hidden_field_tag "#{param_prefix}[cc_type]", "#{current_store.url}#{checkout_state_path(@order.state)}", id: "cc_type", class: 'ccType' %>
+</div>
