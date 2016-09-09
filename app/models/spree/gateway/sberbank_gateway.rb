@@ -39,7 +39,7 @@ module Spree
 
     def purchase(amount, sources, gateway_options = {})
       @credit_card = sources
-      params = {'userName' => self.preferences[:api_username], 'password' => self.preferences[:api_password], 'orderNumber' => gateway_options[:order_id], 'returnUrl' => sources.cc_type, 'amount' => nil }
+      params = {'userName' => self.preferences[:api_username], 'password' => self.preferences[:api_password], 'orderNumber' => gateway_options[:order_id], 'returnUrl' => sources.cc_type, 'amount' => amount }
       commit_url = url + REGISTER_URL
       response_processing(commit(commit_url, params))
     end
