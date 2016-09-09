@@ -72,7 +72,6 @@ module Spree
       if response.has_key?('errorCode')
         ActiveMerchant::Billing::Response.new(false, 'Sberbank Gateway: Forced failure', { message: "Платеж не может быть обработан. #{response['errorMessage']} "}, {})
       elsif response.has_key?('orderId') && response.has_key?('formUrl')
-        @redirect_url = response['formUrl']
         ActiveMerchant::Billing::Response.new(true, 'Sberbank Gateway: Forced success', {}, {})
       end
     end
