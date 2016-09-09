@@ -5,6 +5,7 @@ Spree::CheckoutController.class_eval do
   private
 
   def redirect_to_processing_page
+    byebug
     return unless (params[:state] == "payment")
     #redirect_to '127.0.0.1:3000'
   end

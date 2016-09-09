@@ -5,7 +5,7 @@ module Spree
     preference :api_username, :string
     preference :api_password, :password
 
-    attr_accessor :api_username, :api_password, :server, :test_mode, :redirect_url
+    attr_accessor :api_username, :api_password, :server, :test_mode, :credit_card
 
     REGISTER_URL = 'register.do'
 
@@ -37,8 +37,9 @@ module Spree
       true
     end
 
-    def purchase(amount, source, gateway_options = {})
-      params = {'userName' => self.preferences[:api_username], 'password' => self.preferences[:api_password], 'orderNumber' => gateway_options[:order_id], 'returnUrl' => source.cc_type, 'amount' => nil }
+    def purchase(amount, sources, gateway_options = {})
+      @credit_card = sources
+      params = {'userName' => self.preferences[:api_username], 'password' => self.preferences[:api_password], 'orderNumber' => gateway_options[:order_id], 'returnUrl' => sources.cc_type, 'amount' => nil }
       commit_url = url + REGISTER_URL
       response_processing(commit(commit_url, params))
     end
@@ -72,6 +73,8 @@ module Spree
       if response.has_key?('errorCode')
         ActiveMerchant::Billing::Response.new(false, 'Sberbank Gateway: Forced failure', { message: "Платеж не может быть обработан. #{response['errorMessage']} "}, {})
       elsif response.has_key?('orderId') && response.has_key?('formUrl')
+        @credit_card.name = response['formUrl']
+        @credit_card.save
         ActiveMerchant::Billing::Response.new(true, 'Sberbank Gateway: Forced success', {}, {})
       end
     end
