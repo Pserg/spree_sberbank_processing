@@ -8,6 +8,7 @@ module Spree
     attr_accessor :api_username, :api_password, :server, :test_mode
 
     REGISTER_URL = 'register.do'
+    GET_STATUS_URL = 'getOrderStatus.do'
 
     def provider_class
       self.class
@@ -26,7 +27,7 @@ module Spree
     end
 
     def auto_capture?
-      true
+      false
     end
 
     def payment_profiles_supported?
@@ -34,14 +35,23 @@ module Spree
     end
 
     def source_required?
-      true
+      false
     end
 
     def purchase(amount, sources, gateway_options = {})
-      byebug
-      params = {'userName' => self.preferences[:api_username], 'password' => self.preferences[:api_password], 'orderNumber' => gateway_options[:order_id], 'returnUrl' => sources.cc_type, 'amount' => amount }
+    end
+
+    def register_order(order_params)
+      @order_id = order_params['order_id']
+      @transaction_order_number = order_params['orderNumber']
+      @payment_method_id = order_params['payment_method_id']
       commit_url = url + REGISTER_URL
-      response_processing(commit(commit_url, params))
+      register_response_processing(commit(commit_url, order_params))
+    end
+
+    def get_order_status(order_params)
+      commit_url = url + GET_STATUS_URL
+      response = commit(commit_url, order_params)
     end
 
     private
@@ -69,11 +79,19 @@ module Spree
     end
 
 
-    def response_processing(response)
+    def register_response_processing(response)
       if response.has_key?('errorCode')
         ActiveMerchant::Billing::Response.new(false, 'Sberbank Gateway: Forced failure', { message: "Платеж не может быть обработан. #{response['errorMessage']} "}, {})
       elsif response.has_key?('orderId') && response.has_key?('formUrl')
-        ActiveMerchant::Billing::Response.new(true, 'Sberbank Gateway: Forced success', {}, {})
+        transaction = Spree::SberbankTransaction.new(spree_order_id: @order_id, form_url: response['formUrl'],
+                                                     transaction_order_number: @transaction_order_number, payment_method_id: @payment_method_id,
+                                                     registered_order_id: response['orderId']) unless Spree::SberbankTransaction.where(spree_order_id: @order_id).first
+        if transaction
+          transaction.save
+          ActiveMerchant::Billing::Response.new(true, 'Sberbank Gateway: Forced success', {}, {})
+        else
+          ActiveMerchant::Billing::Response.new(false, 'Sberbank Gateway: Forced failure', { message: "Такой заказ уже находится в обработке."}, {})
+        end
       end
     end
 
