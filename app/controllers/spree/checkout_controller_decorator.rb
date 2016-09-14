@@ -2,6 +2,10 @@ Spree::CheckoutController.class_eval do
   before_action :confirm_order
   before_action :process_order, :only => [:update]
 
+  ERRORS = {'0' => {0 => "Заказ находится в процессе оплаты. Если вы случайно закрыли страницу оплаты
+                      пройдите по ссылке "},
+            '7' => {6 => "Оплата заказа отменена. Выберите другой способ оплаты "}}
+
   def process_order
     return unless (params[:state] == 'payment') && Spree::PaymentMethod.where(id: params[:order][:payments_attributes][0]["payment_method_id"].to_i).first.type == 'Spree::Gateway::SberbankGateway'
     payment_method = Spree::PaymentMethod.where(id: params[:order][:payments_attributes][0]["payment_method_id"].to_i).first
@@ -47,17 +51,10 @@ Spree::CheckoutController.class_eval do
       @current_order = nil
       flash.notice = Spree.t(:order_processed_successfully)
       flash['order_completed'] = true
+      @order.deliver_order_confirmation_email
       redirect_to completion_route
-    elsif response['ErrorCode'] == '0' && response['OrderStatus'] == 0
-      flash.notice = "Заказ находится в процессе оплаты. Если вы случайно закрыли страницу оплаты
-                      пройдите по ссылке #{get_transaction.form_url}"
-      redirect_to checkout_state_path('payment') && return
-    elsif response['ErrorCode'] != '0' && response['OrderStatus'] != '2'
-      flash[:error] = "Ошибка обработки платежа: #{response['ErrorMessage']} "
-      redirect_to checkout_state_path('payment') && return
     else
-      flash[:error] = "Ошибка. Выбирете другой способ оплаты"
-      redirect_to checkout_state_path('payment') && return
+      response_error_handling(response['ErrorCode'], response['OrderStatus'], response['ErrorMessage'])
     end
   end
 
@@ -69,6 +66,16 @@ Spree::CheckoutController.class_eval do
     @order.update(state: 'delivery')
     flash[:error] = "Ошибка регистрации платежа."
     redirect_to checkout_state_path('delivery') && return
+  end
+
+  def response_error_handling(code, status, message)
+    if ERRORS.include?(code)
+      flash['error'] = ERRORS[code][status] if ERRORS[code][status]
+      flash['error'] += get_transaction.form_url if status == 0
+    else
+      flash['error'] = "Ошибка обработки платежа: #{message}. Выбирете другой способ оплаты"
+    end
+      redirect_to checkout_state_path('payment') && return
   end
 
 end

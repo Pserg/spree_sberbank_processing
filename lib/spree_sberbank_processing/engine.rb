@@ -15,6 +15,8 @@ module SpreeSberbankProcessing
       end
     end
 
+    config.assets.precompile += %w( sberbank_processing/*)
+
     config.to_prepare &method(:activate).to_proc
   end
 end
