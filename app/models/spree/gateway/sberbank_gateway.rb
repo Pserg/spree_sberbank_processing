@@ -82,6 +82,7 @@ module Spree
     def register_response_processing(response)
       if response.has_key?('errorCode')
         ActiveMerchant::Billing::Response.new(false, 'Sberbank Gateway: Forced failure', { message: "Платеж не может быть обработан. #{response['errorMessage']} "}, {})
+        return
       elsif response.has_key?('orderId') && response.has_key?('formUrl')
         transaction = Spree::SberbankTransaction.new(spree_order_id: @order_id, form_url: response['formUrl'],
                                                      transaction_order_number: @transaction_order_number, payment_method_id: @payment_method_id,

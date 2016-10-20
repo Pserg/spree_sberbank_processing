@@ -41,8 +41,25 @@ Spree::CheckoutController.class_eval do
     @payment = Spree::Payment.where(order_id: @order.id).first
     return unless @payment.state = 'pending' || get_transaction
     payment_method = Spree::PaymentMethod.where(id: @payment.payment_method_id).first
+    return unless get_transaction
     order_params = {'userName' => payment_method.preferences[:api_username], 'password' => payment_method.preferences[:api_password],'orderId' => get_transaction.registered_order_id}
-    response = payment_method.get_order_status(order_params)
+
+    begin
+      retries ||= 0
+      response = payment_method.get_order_status(order_params)
+
+      if !response
+        logger.fatal "Failed to get response. Order number: #{order.number} Registered order id: #{get_transaction.registered_order_id}"
+        raise "Failed to get response"
+      elsif response['ErrorCode'] == '0' && response['OrderStatus'] == 1 || response['OrderStatus'] == 0
+        logger.fatal "Failed to get right order status. Error code: #{response['ErrorCode']} Order status: #{response['OrderStatus']}  Order number: #{order.number} Registered order id: #{get_transaction.registered_order_id}"
+        raise "Failed to get right order status"
+      end
+
+    rescue
+      sleep(retries)
+      retry if (retries += 1) < 4
+    end
 
     if response['ErrorCode'] == '0' && response['OrderStatus'] == 2
       @payment.state = 'completed'
